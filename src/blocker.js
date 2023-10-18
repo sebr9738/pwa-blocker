@@ -1,6 +1,6 @@
-/* Formatters */
+import { giveMePi } from './modules/madhava-leibniz.js';
+
 const TIME_FORMAT = Intl.DateTimeFormat('de-DE', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
-const NUMBER_FORMAT = Intl.NumberFormat('de-DE');       //e.g. NUMBER_FORMAT.format(10000) -> '10.000'
 
 /* HTML element IDs */
 const EXECUTION_MODE_ID = 'executionMode';
@@ -9,52 +9,62 @@ const COUNTER_ID = 'counter';
 const BLOCKER_ID = 'blocker';
 const INC_COUNTER_ID = 'incCounter';
 const RUN_BLOCKER_ID = 'runBlocker';
-const THE_END_ID = 'theEnd';
+const PI_ID = 'pi';
 
-/* event handlers */
-function incCounter() {
-    const counterElem = document.getElementById(COUNTER_ID);
-    const value = Number(counterElem.innerHTML) + 1;
-    counterElem.innerHTML = value;
-}
-
-function runBlocker(seconds) {
+/**
+ * Update UI to state "running"
+ */
+function signalRunningState() {
     const blockerElem = document.getElementById(BLOCKER_ID);
     blockerElem.innerHTML = "running";
     blockerElem.className = "running";
+}
 
-    /* Call block() in the next event handling cycle.
-    This give the browser the oppotunity to update the changes applied to blockerElem.
-     */
-    setTimeout(
-        () => { block(5.0); },
-        100      // 100ms seams to be a reasonable delay
-    );
+/**
+ * Show the approximate value for π and update UI to state "idle".
+ * @param {*} guess 
+ */
+function signalIdleState(guess) {
+    console.log(`We know π ≅ ${guess.pi} bounded by [${guess.piMin}, ${guess.piMax}]`);
+
+    //update UI
+    const blockerElem = document.getElementById(BLOCKER_ID);
+    const piElem = document.getElementById(PI_ID);
+    blockerElem.innerHTML = "idle";
+    blockerElem.className = "idle";
+    piElem.innerHTML = `π ≅ ${guess.pi}`;
+}
+
+function incCounter() {
+    var counter = document.getElementById(COUNTER_ID);
+    var value = Number(counter.innerHTML) + 1;
+    counter.innerHTML = value;
+}
+
+function runBlocker(seconds) {
+    signalRunningState();
+    setTimeout(() => {
+        block(5.0);
+    }, 100); /* 100ms seams to be a reasonable delay for the browser to update the blockerElem */
 }
 
 function block(seconds) {
     const execElem = document.getElementById(EXECUTION_MODE_ID);
     const executionMode = execElem.options[execElem.selectedIndex].text;
 
-    if (executionMode === 'main thread non blocking') {
-        setTimeout(
-            () => {
-                const blockerElem = document.getElementById(BLOCKER_ID);
-                blockerElem.innerHTML = "idle";
-                blockerElem.className = "idle";
-                console.log(`Nothing done while blocking.`);
-            },
-            seconds * 1000);
+    if (executionMode === 'shared worker') {
+        //let a shared worker perform the computation
+    } else if (executionMode === 'dedicated worker') {
+        //
+    } else {
+        /* progressive degrade to single threaded behavior */
+        let guess = giveMePi(5);
+        signalIdleState(guess);
     }
 }
 
-/**
- * The clock.
- * 
- * We poll the system clock in a high frequence of 19ms.
- * Whenever the time presentation truncated to hh:mm:ss changes, we update
- * the DOM, which happens only once per second.
- */
+//Implementation of a clock.
+//The display of time fades in and out, which is realized by changing the css class.
 var toggle = true;
 var localTime = TIME_FORMAT.format(new Date());
 function updateClock() {
@@ -71,19 +81,11 @@ function updateClock() {
         toggle = !toggle;
     }
 }
-setInterval(updateClock, 19);
 
-/* set up to user interface and attach the handlers */
+/* set up to user interface */
 document.getElementById(CLOCK_ID).innerHTML = localTime;
 document.getElementById(INC_COUNTER_ID).addEventListener('click', incCounter);
 document.getElementById(RUN_BLOCKER_ID).addEventListener('click', () => runBlocker(5.0));
 
-/* If block() blocks the main thread,
-this event handler will delay the redering of the page.
- */
-document.addEventListener('DOMContentLoaded', (event) => {
-    const endElement = document.getElementById(THE_END_ID);
-    block(3.0);
-    endElement.innerHTML = 'This is the End.';
-    block(3.0);
-});
+// run updateClock periodically
+setInterval(updateClock, 19);
