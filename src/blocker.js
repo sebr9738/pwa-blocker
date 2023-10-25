@@ -1,3 +1,8 @@
+// Autor (Bearbeitet): Robert Sebastian 
+// E-Mail: rse9738@students.fhv.at
+// Datum: 25. Oktober 2023
+
+// blocker.js
 import { giveMePi } from "./modules/madhava-leibniz.js";
 
 const TIME_FORMAT = Intl.DateTimeFormat("de-DE", {
