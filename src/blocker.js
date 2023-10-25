@@ -138,21 +138,3 @@ document
 
 // run updateClock periodically
 setInterval(updateClock, 19);
-
-// function runDedicatedWorker() {
-//   signalRunningState();
-
-//   const worker = new Worker("dedicated-worker.js");
-
-//   worker.addEventListener("message", (event) => {
-//     signalIdleState(event.data);
-//     worker.terminate();
-//   });
-
-//   // Starte den Dedicated Worker
-//   worker.postMessage("start");
-// }
-
-// document
-// .getElementById(RUN_BLOCKER_ID)
-// .addEventListener("click", runDedicatedWorker);
